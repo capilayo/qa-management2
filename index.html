@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QA Management System — Demo</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+      font-size: 14px;
+      background: #f3f4f6;
+      color: #1f2328;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ── Demo banner ── */
+    .demo-banner {
+      background: #1e3a5f;
+      color: #fff;
+      font-size: 12px;
+      padding: 6px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .demo-banner .badge {
+      background: #3b82f6;
+      border-radius: 4px;
+      padding: 2px 8px;
+      font-weight: 700;
+      font-size: 11px;
+      letter-spacing: 0.05em;
+    }
+
+    /* ── App shell ── */
+    .shell {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: 190px;
+      background: #1e293b;
+      color: #cbd5e1;
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      overflow-y: auto;
+    }
+    .sidebar-brand {
+      padding: 20px 16px 14px;
+      border-bottom: 1px solid #334155;
+    }
+    .sidebar-brand .app-name {
+      font-size: 16px;
+      font-weight: 700;
+      color: #f1f5f9;
+    }
+    .sidebar-brand .app-sub {
+      font-size: 11px;
+      color: #94a3b8;
+      margin-top: 2px;
+    }
+    .sidebar-section {
+      padding: 16px 0 4px;
+    }
+    .sidebar-section-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      color: #64748b;
+      padding: 0 16px 6px;
+      text-transform: uppercase;
+    }
+    .sidebar-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 16px;
+      cursor: pointer;
+      border-radius: 0;
+      color: #94a3b8;
+      font-size: 13px;
+      transition: background 0.15s;
+    }
+    .sidebar-item:hover { background: #334155; color: #f1f5f9; }
+    .sidebar-item.active { background: #334155; color: #f1f5f9; }
+    .sidebar-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+    .sidebar-bottom {
+      margin-top: auto;
+      padding: 12px 16px;
+      border-top: 1px solid #334155;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .avatar-sm {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 13px; color: #fff;
+      flex-shrink: 0;
+    }
+    .sidebar-bottom .user-info .name { font-size: 13px; color: #f1f5f9; font-weight: 600; }
+    .sidebar-bottom .user-info .role { font-size: 11px; color: #94a3b8; }
+
+    /* ── Main content ── */
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Top bar ── */
+    .topbar {
+      background: #fff;
+      border-bottom: 1px solid #e5e7eb;
+      padding: 0 24px;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .topbar-title { font-size: 15px; font-weight: 600; color: #1f2328; }
+    .topbar-right { display: flex; align-items: center; gap: 14px; }
+    .live-pill {
+      display: flex; align-items: center; gap: 6px;
+      background: #f0fdf4; border: 1px solid #bbf7d0;
+      border-radius: 20px; padding: 3px 10px;
+      font-size: 12px; font-weight: 600; color: #16a34a;
+    }
+    .live-dot { width: 7px; height: 7px; background: #16a34a; border-radius: 50%; animation: pulse 1.5s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+    .notif-btn {
+      position: relative; background: none; border: none; cursor: pointer;
+      color: #64748b; display: flex; align-items: center;
+    }
+    .notif-badge {
+      position: absolute; top: -4px; right: -4px;
+      background: #f59e0b; color: #fff;
+      font-size: 10px; font-weight: 700;
+      width: 16px; height: 16px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .admin-btn {
+      display: flex; align-items: center; gap: 6px;
+      background: none; border: 1px solid #e5e7eb; border-radius: 6px;
+      padding: 5px 10px; cursor: pointer; font-size: 13px; color: #374151;
+    }
+
+    /* ── Content area ── */
+    .content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+    }
+
+    /* ── Board header ── */
+    .board-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .board-title { font-size: 20px; font-weight: 700; color: #1f2328; }
+    .board-sub { font-size: 13px; color: #6b7280; margin-top: 3px; }
+    .board-controls { display: flex; align-items: center; gap: 10px; }
+    .status-select {
+      border: 1px solid #e5e7eb; border-radius: 6px; padding: 5px 10px;
+      font-size: 13px; background: #fff; cursor: pointer;
+      display: flex; align-items: center; gap: 6px;
+    }
+
+    /* ── Stats row ── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+    .stat-card {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 16px 18px;
+    }
+    .stat-label { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #6b7280; margin-bottom: 6px; }
+    .stat-value { font-size: 28px; font-weight: 700; color: #1f2328; line-height: 1; margin-bottom: 4px; }
+    .stat-desc { font-size: 11px; color: #9ca3af; }
+    .stat-card.green .stat-value { color: #16a34a; }
+    .stat-card.blue .stat-value  { color: #2563eb; }
+    .stat-card.amber .stat-value { color: #d97706; }
+    .stat-card.red .stat-value   { color: #dc2626; }
+    .stat-card.purple .stat-value{ color: #7c3aed; }
+
+    /* ── Agent grid ── */
+    .agents-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+      gap: 16px;
+    }
+
+    /* ── Agent card ── */
+    .agent-card {
+      background: #fff;
+      border: 2px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 16px;
+      position: relative;
+    }
+    .agent-card.available  { border-color: #86efac; }
+    .agent-card.busy       { border-color: #fca5a5; }
+    .agent-card.on-break   { border-color: #fcd34d; }
+    .agent-card.on-leave   { border-color: #a5b4fc; }
+
+    .agent-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .avatar {
+      width: 38px; height: 38px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 15px; color: #fff; flex-shrink: 0;
+      position: relative;
+    }
+    .avatar .online-dot {
+      position: absolute; bottom: 1px; right: 1px;
+      width: 10px; height: 10px; border-radius: 50%; border: 2px solid #fff;
+    }
+    .online-dot.green  { background: #16a34a; }
+    .online-dot.red    { background: #dc2626; }
+    .online-dot.amber  { background: #d97706; }
+    .online-dot.purple { background: #7c3aed; }
+
+    .agent-info .agent-name { font-size: 14px; font-weight: 700; color: #1f2328; }
+    .agent-info .you-badge {
+      font-size: 10px; font-weight: 600; color: #2563eb;
+      background: #dbeafe; border-radius: 4px; padding: 1px 5px; margin-left: 5px;
+    }
+    .agent-info .agent-role { font-size: 12px; color: #6b7280; margin-top: 1px; }
+
+    .status-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      border-radius: 20px; padding: 3px 10px;
+      font-size: 11px; font-weight: 600; margin-bottom: 12px;
+    }
+    .status-badge .dot { width: 6px; height: 6px; border-radius: 50%; }
+    .status-badge.available { background: #f0fdf4; color: #15803d; }
+    .status-badge.available .dot { background: #16a34a; }
+    .status-badge.busy      { background: #fef2f2; color: #b91c1c; }
+    .status-badge.busy .dot { background: #dc2626; }
+    .status-badge.on-break  { background: #fffbeb; color: #92400e; }
+    .status-badge.on-break .dot { background: #d97706; }
+    .status-badge.on-leave  { background: #f5f3ff; color: #5b21b6; }
+    .status-badge.on-leave .dot { background: #7c3aed; }
+
+    .task-label { font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #9ca3af; margin-bottom: 4px; }
+    .task-id { font-size: 13px; font-weight: 600; color: #2563eb; }
+    .task-name { font-size: 12px; color: #374151; margin-top: 2px; }
+    .task-meta { font-size: 11px; color: #9ca3af; margin-top: 4px; display: flex; align-items: center; gap: 4px; }
+    .no-task { font-size: 12px; color: #9ca3af; }
+    .updated { font-size: 11px; color: #d1d5db; margin-top: 6px; }
+  </style>
+</head>
+<body>
+
+  <!-- Demo Banner -->
+  <div class="demo-banner">
+    <span class="badge">DEMO MODE</span>
+    <span>— Sample data only. No Supabase connection required.</span>
+  </div>
+
+  <div class="shell">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div class="app-name">QA System</div>
+        <div class="app-sub">Quality Assurance Management</div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-section-label">Overview</div>
+        <div class="sidebar-item active">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+          Dashboard
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-section-label">Requests</div>
+        <div class="sidebar-item">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 4v16m8-8H4"/></svg>
+          Submit Request
+        </div>
+        <div class="sidebar-item">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+          Request Queue
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-section-label">Audits</div>
+        <div class="sidebar-item">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 17v-2m3 2v-4m3 4v-6M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+          Audit Workloads
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-section-label">Team</div>
+        <div class="sidebar-item">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+          QA Availability
+        </div>
+        <div class="sidebar-item">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 20h5v-2a4 4 0 00-5-3.87M9 20H4v-2a4 4 0 015-3.87m6-4a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+          User Management
+        </div>
+      </div>
+
+      <div class="sidebar-bottom">
+        <div class="avatar-sm" style="background:#4f46e5;">A</div>
+        <div class="user-info">
+          <div class="name">Admin User</div>
+          <div class="role">Administrator</div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <div class="main">
+
+      <!-- Top bar -->
+      <div class="topbar">
+        <div class="topbar-title">QA Management System</div>
+        <div class="topbar-right">
+          <div class="live-pill"><span class="live-dot"></span> Live</div>
+          <button class="notif-btn">
+            <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+            <span class="notif-badge">3</span>
+          </button>
+          <button class="admin-btn">
+            Admin
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M19 9l-7 7-7-7"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Content -->
+      <div class="content">
+
+        <!-- Board header -->
+        <div class="board-header">
+          <div>
+            <div class="board-title">QA Availability Board</div>
+            <div class="board-sub">Live team status — updates in real time.</div>
+          </div>
+          <div class="board-controls">
+            <div class="live-pill"><span class="live-dot"></span> Live</div>
+            <div class="status-select">
+              My Status: <strong>Available</strong>
+              <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M19 9l-7 7-7-7"/></svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-row">
+          <div class="stat-card green">
+            <div class="stat-label">Available</div>
+            <div class="stat-value">3</div>
+            <div class="stat-desc">ready to take work</div>
+          </div>
+          <div class="stat-card red">
+            <div class="stat-label">Busy</div>
+            <div class="stat-value">4</div>
+            <div class="stat-desc">in active work</div>
+          </div>
+          <div class="stat-card amber">
+            <div class="stat-label">On Break</div>
+            <div class="stat-value">1</div>
+            <div class="stat-desc">&nbsp;</div>
+          </div>
+          <div class="stat-card purple">
+            <div class="stat-label">Away / Leave</div>
+            <div class="stat-value">2</div>
+            <div class="stat-desc">&nbsp;</div>
+          </div>
+          <div class="stat-card blue">
+            <div class="stat-label">Active Tasks</div>
+            <div class="stat-value">4</div>
+            <div class="stat-desc">in progress</div>
+          </div>
+        </div>
+
+        <!-- Agent cards -->
+        <div class="agents-grid">
+
+          <!-- Maria Santos -->
+          <div class="agent-card available">
+            <div class="agent-header">
+              <div class="avatar" style="background:#16a34a;">
+                M
+                <span class="online-dot green"></span>
+              </div>
+              <div class="agent-info">
+                <div class="agent-name">Maria Santos <span class="you-badge">You</span></div>
+                <div class="agent-role">QA Reviewer</div>
+              </div>
+            </div>
+            <div><span class="status-badge available"><span class="dot"></span> Available</span></div>
+            <div class="task-label">Current Task</div>
+            <div class="no-task">No active task</div>
+            <div class="updated">Updated Jun 10, 2025 08:30</div>
+          </div>
+
+          <!-- Kevin Lim -->
+          <div class="agent-card busy">
+            <div class="agent-header">
+              <div class="avatar" style="background:#2563eb;">
+                K
+                <span class="online-dot red"></span>
+              </div>
+              <div class="agent-info">
+                <div class="agent-name">Kevin Lim</div>
+                <div class="agent-role">QA — Operations</div>
+              </div>
+            </div>
+            <div><span class="status-badge busy"><span class="dot"></span> Busy — Real-Time</span></div>
+            <div class="task-label">Current Task</div>
+            <div class="task-id">QA-2025-0246</div>
+            <div class="task-name">Post Audit QA</div>
+            <div class="task-meta">⏱ TAT: 0d 1h 14m</div>
+            <div class="updated">Updated Jun 10, 2025 07:28</div>
+          </div>
+
+          <!-- Rose Buenaventura -->
+          <div class="agent-card busy">
+            <div class="agent-header">
+              <div class="avatar" style="background:#dc2626;">
+                R
+                <span class="online-dot red"></span>
+              </div>
+              <div class="agent-info">
+                <div class="agent-name">Rose Buenaventura</div>
+                <div class="agent-role">QA — CX Hub</div>
+              </div>
+            </div>
+            <div><span class="status-badge busy"><span class="dot"></span> Busy — Post Audit</span></div>
+            <div class="task-label">Current Task</div>
+            <div class="task-id">QA-2025-0244</div>
+            <div class="task-name">Real-Time QA</div>
+            <div class="task-meta">⏱ TAT: 0d 3h 10m</div>
+            <div class="updated">Updated Jun 10, 2025 05:32</div>
+          </div>
+
+          <!-- Diego Macaraeg -->
+          <div class="agent-card available">
+            <div class="agent-header">
+              <div class="avatar" style="background:#d97706;">
+                D
+                <span class="online-dot green"></span>
+              </div>
+              <div class="agent-info">
+                <div class="agent-name">Diego Macaraeg</div>
+                <div class="agent-role">QA — Ground Svcs</div>
+              </div>
+            </div>
+            <div><span class="status-badge available"><span class="dot"></span> Available</span></div>
+            <div class="task-label">Current Task</div>
+            <div class="no-task">No active task</div>
+            <div class="updated">Updated Jun 10, 2025 08:00</div>
+          </div>
+
+          <!-- Sofia Abad -->
+          <div class="agent-card on-break">
+            <div class="agent-header">
+              <div class="avatar" style="background:#7c3aed;">
+                S
+                <span class="online-dot amber"></span>
+              </div>
+              <div class="agent-info">
+                <div class="agent-name">Sofia Abad</div>
+                <div class="agent-role">QA — CX Hub</div>
+              </div>
+            </div>
+            <div><span class="status-badge on-break"><span class="dot"></span> On Break</span></div>
+            <div class="task-label">Current Task</div>
+            <div class="no-task">No active task</div>
+            <div class="updated">Updated Jun 10, 2025 08:15</div>
+          </div>
+
+          <!-- Leo Pascual -->
+          <div class="agent-card busy">
+            <div class="agent-header">
+              <div class="avatar" style="background:#0891b2;">
+                L
+                <span class="online-dot red"></span>
+              </div>
+              <div class="agent-info">
+                <div class="agent-name">Leo Pascual</div>
+                <div class="agent-role">QA — MNL Hub</div>
+              </div>
+            </div>
+            <div><span class="status-badge busy"><span class="dot"></span> Busy — Real-Time</span></div>
+            <div class="task-label">Current Task</div>
+            <div class="task-id">QA-2025-0245</div>
+            <div class="task-name">Coaching Session</div>
+            <div class="task-meta">⏱ TAT: 0d 2h 55m</div>
+            <div class="updated">Updated Jun 10, 2025 05:47</div>
+          </div>
+
+          <!-- Camille Navarro -->
+          <div class="agent-card on-leave">
+            <div class="agent-header">
+              <div class="avatar" style="background:#059669;">
+                C
+                <span class="online-dot purple"></span>
+              </div>
+              <div class="agent-info">
+                <div class="agent-name">Camille Navarro</div>
+                <div class="agent-role">QA — Operations</div>
+              </div>
+            </div>
+            <div><span class="status-badge on-leave"><span class="dot"></span> On Leave</span></div>
+            <div class="task-label">Current Task</div>
+            <div class="no-task">No active task</div>
+            <div class="updated">Updated Jun 9, 2025 17:30</div>
+          </div>
+
+          <!-- Noel Dizon -->
+          <div class="agent-card available">
+            <div class="agent-header">
+              <div class="avatar" style="background:#0f766e;">
+                N
+                <span class="online-dot green"></span>
+              </div>
+              <div class="agent-info">
+                <div class="agent-name">Noel Dizon</div>
+                <div class="agent-role">QA — Ground Svcs</div>
+              </div>
+            </div>
+            <div><span class="status-badge available"><span class="dot"></span> Available</span></div>
+            <div class="task-label">Current Task</div>
+            <div class="no-task">No active task</div>
+            <div class="updated">Updated Jun 10, 2025 07:45</div>
+          </div>
+
+        </div>
+      </div><!-- /content -->
+    </div><!-- /main -->
+  </div><!-- /shell -->
+
+</body>
+</html>
