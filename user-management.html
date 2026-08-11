@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QA Management System — User Management</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <div class="demo-banner">
+    <span class="badge">DEMO MODE</span>
+    <span>— Sample data only. No Supabase connection required.</span>
+  </div>
+
+  <div class="shell">
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <div class="main">
+      <div class="topbar">
+        <div class="topbar-title">QA Management System</div>
+        <div class="topbar-right">
+          <div class="live-pill"><span class="live-dot"></span> Live</div>
+          <button class="notif-btn">
+            <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+            <span class="notif-badge" id="notifCount">3</span>
+          </button>
+          <button class="admin-btn">Admin <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M19 9l-7 7-7-7"/></svg></button>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="page-header">
+          <div>
+            <div class="page-title">User Management</div>
+            <div class="page-sub">Add, edit, or remove QA team members.</div>
+          </div>
+          <button class="btn btn-primary" onclick="openAddModal()">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 4v16m8-8H4"/></svg>
+            Add User
+          </button>
+        </div>
+
+        <!-- Summary pills -->
+        <div style="display:flex;gap:10px;margin-bottom:20px;" id="summaryPills"></div>
+
+        <!-- Table -->
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Role</th>
+                <th>Department</th>
+                <th>Status</th>
+                <th>Current Task</th>
+                <th style="text-align:right;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="userTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add User Modal -->
+  <div class="modal-backdrop" id="addModal">
+    <div class="modal">
+      <div class="modal-title">Add New User</div>
+      <div class="form-group">
+        <label>Full Name *</label>
+        <input type="text" id="newName" placeholder="e.g. Juan dela Cruz" />
+      </div>
+      <div class="form-group">
+        <label>Role *</label>
+        <select id="newRole">
+          <option value="">— Select role —</option>
+          <option>QA Analyst</option>
+          <option>QA Reviewer</option>
+          <option>QA Specialist</option>
+          <option>QA Lead</option>
+          <option>QA Supervisor</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Department *</label>
+        <select id="newDept">
+          <option value="">— Select department —</option>
+          <option>CX Hub</option>
+          <option>Operations</option>
+          <option>Ground Svcs</option>
+          <option>MNL Hub</option>
+          <option>Real-Time</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Initial Status</label>
+        <select id="newStatus">
+          <option value="available">Available</option>
+          <option value="busy">Busy</option>
+          <option value="on-break">On Break</option>
+          <option value="on-leave">On Leave</option>
+        </select>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="closeAddModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="addUser()">Add User</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirm Delete Modal -->
+  <div class="modal-backdrop" id="deleteModal">
+    <div class="modal">
+      <div class="modal-title">Remove User</div>
+      <p style="font-size:14px;color:#374151;margin-bottom:20px;">
+        Are you sure you want to remove <strong id="deleteUserName"></strong> from the team? This cannot be undone.
+      </p>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="closeDeleteModal()">Cancel</button>
+        <button class="btn btn-danger" onclick="confirmDelete()">Remove</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="shared.js"></script>
+  <script src="nav.js"></script>
+  <script>
+    document.getElementById("sidebar").innerHTML = buildSidebar("user-management");
+
+    let deleteTargetId = null;
+
+    function render() {
+      const users = getUsers();
+
+      // Summary pills
+      const counts = { available: 0, busy: 0, "on-break": 0, "on-leave": 0 };
+      users.forEach(u => counts[u.status] = (counts[u.status] || 0) + 1);
+      document.getElementById("summaryPills").innerHTML = `
+        <span style="background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600;">✔ ${counts.available} Available</span>
+        <span style="background:#fef2f2;color:#b91c1c;border:1px solid #fecaca;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600;">● ${counts.busy} Busy</span>
+        <span style="background:#fffbeb;color:#92400e;border:1px solid #fde68a;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600;">◐ ${counts["on-break"]} On Break</span>
+        <span style="background:#f5f3ff;color:#5b21b6;border:1px solid #ddd6fe;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600;">○ ${counts["on-leave"]} On Leave</span>
+        <span style="background:#f0f9ff;color:#0369a1;border:1px solid #bae6fd;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600;">👤 ${users.length} Total</span>
+      `;
+
+      // Table rows
+      document.getElementById("userTableBody").innerHTML = users.map(u => {
+        const meta = STATUS_META[u.status];
+        const color = avatarColor(u.id);
+        const initials = getInitials(u.name);
+        return `
+          <tr>
+            <td>
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div class="avatar-sm" style="background:${color};">${initials}</div>
+                <span style="font-weight:600;">${u.name}</span>
+              </div>
+            </td>
+            <td>${u.role}</td>
+            <td>${u.dept}</td>
+            <td><span class="status-badge ${meta.badgeClass}"><span class="dot"></span> ${meta.label}</span></td>
+            <td style="color:#6b7280;">${u.task || "—"}</td>
+            <td style="text-align:right;">
+              <button class="btn btn-danger" style="padding:4px 10px;font-size:12px;" onclick="openDeleteModal(${u.id}, '${u.name.replace(/'/g, "\\'")}')">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
+                Remove
+              </button>
+            </td>
+          </tr>`;
+      }).join("");
+    }
+
+    function openAddModal() {
+      document.getElementById("newName").value = "";
+      document.getElementById("newRole").value = "";
+      document.getElementById("newDept").value = "";
+      document.getElementById("newStatus").value = "available";
+      document.getElementById("addModal").classList.add("open");
+    }
+    function closeAddModal() { document.getElementById("addModal").classList.remove("open"); }
+
+    function addUser() {
+      const name   = document.getElementById("newName").value.trim();
+      const role   = document.getElementById("newRole").value;
+      const dept   = document.getElementById("newDept").value;
+      const status = document.getElementById("newStatus").value;
+      if (!name || !role || !dept) { alert("Please fill in all required fields."); return; }
+
+      const users = getUsers();
+      const newId = users.length ? Math.max(...users.map(u => u.id)) + 1 : 1;
+      users.push({ id: newId, name, role, dept, status, task: "", tat: "", updated: nowString() });
+      saveUsers(users);
+      closeAddModal();
+      render();
+      showToast(`${name} added to the team.`);
+    }
+
+    function openDeleteModal(id, name) {
+      deleteTargetId = id;
+      document.getElementById("deleteUserName").textContent = name;
+      document.getElementById("deleteModal").classList.add("open");
+    }
+    function closeDeleteModal() {
+      deleteTargetId = null;
+      document.getElementById("deleteModal").classList.remove("open");
+    }
+    function confirmDelete() {
+      if (!deleteTargetId) return;
+      const users = getUsers().filter(u => u.id !== deleteTargetId);
+      saveUsers(users);
+      closeDeleteModal();
+      render();
+      showToast("User removed from the team.");
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById("toast");
+      t.textContent = msg;
+      t.classList.add("show");
+      setTimeout(() => t.classList.remove("show"), 2800);
+    }
+
+    // Close modals on backdrop click
+    document.getElementById("addModal").addEventListener("click", e => { if (e.target === e.currentTarget) closeAddModal(); });
+    document.getElementById("deleteModal").addEventListener("click", e => { if (e.target === e.currentTarget) closeDeleteModal(); });
+
+    render();
+  </script>
+</body>
+</html>

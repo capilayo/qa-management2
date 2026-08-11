@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QA Management System — QA Availability</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <div class="demo-banner">
+    <span class="badge">DEMO MODE</span>
+    <span>— Sample data only. No Supabase connection required.</span>
+  </div>
+
+  <div class="shell">
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <div class="main">
+      <div class="topbar">
+        <div class="topbar-title">QA Management System</div>
+        <div class="topbar-right">
+          <div class="live-pill"><span class="live-dot"></span> Live</div>
+          <button class="notif-btn">
+            <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+            <span class="notif-badge">3</span>
+          </button>
+          <button class="admin-btn">Admin <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M19 9l-7 7-7-7"/></svg></button>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="board-header">
+          <div>
+            <div class="board-title">QA Availability</div>
+            <div class="board-sub">Click any card to update that member's status and current task.</div>
+          </div>
+          <div class="board-controls">
+            <div class="live-pill"><span class="live-dot"></span> Live</div>
+          </div>
+        </div>
+
+        <div class="stats-row" id="statsRow"></div>
+        <div class="agents-grid" id="agentsGrid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Status Update Modal -->
+  <div class="modal-backdrop" id="statusModal">
+    <div class="modal">
+      <div class="modal-title" id="modalUserName">Update Status</div>
+
+      <div class="form-group">
+        <label>Status</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px;" id="statusOptions"></div>
+      </div>
+
+      <div class="form-group" id="taskGroup">
+        <label>Current Task <span style="color:#9ca3af;font-weight:400;">(optional)</span></label>
+        <input type="text" id="taskInput" placeholder="e.g. Post Audit QA, Coaching Session…" />
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="closeStatusModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveStatus()">Save Status</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="shared.js"></script>
+  <script src="nav.js"></script>
+  <script>
+    document.getElementById("sidebar").innerHTML = buildSidebar("qa-availability");
+
+    let editingUserId = null;
+    let selectedStatus = "available";
+
+    const STATUS_OPTIONS = [
+      { value: "available", label: "Available",   bg: "#f0fdf4", border: "#86efac", color: "#15803d" },
+      { value: "busy",      label: "Busy",        bg: "#fef2f2", border: "#fca5a5", color: "#b91c1c" },
+      { value: "on-break",  label: "On Break",    bg: "#fffbeb", border: "#fcd34d", color: "#92400e" },
+      { value: "on-leave",  label: "On Leave",    bg: "#f5f3ff", border: "#a5b4fc", color: "#5b21b6" },
+    ];
+
+    function render() {
+      const users = getUsers();
+      const counts = { available: 0, busy: 0, "on-break": 0, "on-leave": 0 };
+      users.forEach(u => counts[u.status] = (counts[u.status] || 0) + 1);
+      const activeTasks = users.filter(u => u.task).length;
+
+      document.getElementById("statsRow").innerHTML = `
+        <div class="stat-card green"><div class="stat-label">Available</div><div class="stat-value">${counts.available}</div><div class="stat-desc">ready to take work</div></div>
+        <div class="stat-card red"><div class="stat-label">Busy</div><div class="stat-value">${counts.busy}</div><div class="stat-desc">in active work</div></div>
+        <div class="stat-card amber"><div class="stat-label">On Break</div><div class="stat-value">${counts["on-break"]}</div><div class="stat-desc">&nbsp;</div></div>
+        <div class="stat-card purple"><div class="stat-label">Away / Leave</div><div class="stat-value">${counts["on-leave"]}</div><div class="stat-desc">&nbsp;</div></div>
+        <div class="stat-card blue"><div class="stat-label">Active Tasks</div><div class="stat-value">${activeTasks}</div><div class="stat-desc">in progress</div></div>
+      `;
+
+      document.getElementById("agentsGrid").innerHTML = users.map(u => buildCard(u)).join("");
+    }
+
+    function buildCard(u) {
+      const meta = STATUS_META[u.status];
+      const color = avatarColor(u.id);
+      const initials = getInitials(u.name);
+      const taskHtml = u.task
+        ? `<div class="task-name" style="font-size:12px;color:#374151;">${u.task}</div>${u.tat ? `<div class="task-meta">⏱ TAT: ${u.tat}</div>` : ""}`
+        : `<div class="no-task">No active task</div>`;
+      return `
+        <div class="agent-card clickable ${meta.borderClass}" onclick="openStatusModal(${u.id})">
+          <div class="agent-header">
+            <div class="avatar" style="background:${color};">
+              ${initials}<span class="online-dot ${meta.dotClass}"></span>
+            </div>
+            <div class="agent-info">
+              <div class="agent-name">${u.name}</div>
+              <div class="agent-role">${u.role} — ${u.dept}</div>
+            </div>
+          </div>
+          <div><span class="status-badge ${meta.badgeClass}"><span class="dot"></span> ${meta.label}</span></div>
+          <div class="task-label">Current Task</div>
+          ${taskHtml}
+          <div class="updated">Updated ${u.updated}</div>
+          <button class="change-status-btn">✏ Change Status</button>
+        </div>`;
+    }
+
+    function openStatusModal(userId) {
+      const users = getUsers();
+      const user = users.find(u => u.id === userId);
+      if (!user) return;
+      editingUserId = userId;
+      selectedStatus = user.status;
+
+      document.getElementById("modalUserName").textContent = `Update: ${user.name}`;
+      document.getElementById("taskInput").value = user.task || "";
+      renderStatusOptions();
+      document.getElementById("statusModal").classList.add("open");
+    }
+
+    function renderStatusOptions() {
+      document.getElementById("statusOptions").innerHTML = STATUS_OPTIONS.map(opt => `
+        <div onclick="selectStatus('${opt.value}')" id="opt-${opt.value}"
+          style="
+            border: 2px solid ${selectedStatus === opt.value ? opt.border : "#e5e7eb"};
+            background: ${selectedStatus === opt.value ? opt.bg : "#fff"};
+            color: ${selectedStatus === opt.value ? opt.color : "#374151"};
+            border-radius: 8px; padding: 10px 12px; cursor: pointer;
+            font-size: 13px; font-weight: 600; text-align: center;
+            transition: all 0.15s;
+          ">
+          ${opt.label}
+        </div>`).join("");
+    }
+
+    function selectStatus(val) {
+      selectedStatus = val;
+      renderStatusOptions();
+    }
+
+    function closeStatusModal() {
+      editingUserId = null;
+      document.getElementById("statusModal").classList.remove("open");
+    }
+
+    function saveStatus() {
+      if (!editingUserId) return;
+      const users = getUsers();
+      const idx = users.findIndex(u => u.id === editingUserId);
+      if (idx === -1) return;
+      const task = document.getElementById("taskInput").value.trim();
+      users[idx].status  = selectedStatus;
+      users[idx].task    = task;
+      users[idx].tat     = task ? users[idx].tat : "";
+      users[idx].updated = nowString();
+      saveUsers(users);
+      closeStatusModal();
+      render();
+      showToast(`${users[idx].name}'s status updated to ${STATUS_META[selectedStatus].label}.`);
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById("toast");
+      t.textContent = msg;
+      t.classList.add("show");
+      setTimeout(() => t.classList.remove("show"), 2800);
+    }
+
+    document.getElementById("statusModal").addEventListener("click", e => {
+      if (e.target === e.currentTarget) closeStatusModal();
+    });
+
+    render();
+  </script>
+</body>
+</html>
