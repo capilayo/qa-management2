@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>QA Management System</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+      background: #f3f4f6; color: #1f2328; font-size: 14px; line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* ── Layout ── */
+    .shell { display: flex; min-height: 100vh; }
+    .sidebar {
+      width: 210px; flex-shrink: 0; background: #1e293b; color: #cbd5e1;
+      display: flex; flex-direction: column;
+      position: sticky; top: 0; height: 100vh; overflow-y: auto;
+    }
+    .sidebar-brand { padding: 20px 16px 14px; border-bottom: 1px solid #334155; }
+    .sidebar-brand .app-name { font-size: 15px; font-weight: 700; color: #f1f5f9; }
+    .sidebar-brand .app-sub  { font-size: 11px; color: #94a3b8; margin-top: 2px; }
+    .sidebar-section { padding: 14px 0 4px; }
+    .sidebar-section-label {
+      font-size: 10px; font-weight: 600; letter-spacing: 0.08em;
+      color: #64748b; padding: 0 16px 6px; text-transform: uppercase;
+    }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 16px; cursor: pointer; color: #94a3b8;
+      font-size: 13px; border: none; background: none; width: 100%;
+      text-align: left; transition: background 0.15s;
+    }
+    .nav-item:hover  { background: #334155; color: #f1f5f9; }
+    .nav-item.active { background: #334155; color: #f1f5f9; }
+    .nav-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+    .sidebar-bottom {
+      margin-top: auto; padding: 12px 16px; border-top: 1px solid #334155;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .sidebar-bottom .s-name { font-size: 13px; color: #f1f5f9; font-weight: 600; }
+    .sidebar-bottom .s-role { font-size: 11px; color: #94a3b8; }
+
+    .main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+    .topbar {
+      background: #fff; border-bottom: 1px solid #e5e7eb; padding: 0 24px;
+      height: 52px; display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 10;
+    }
+    .topbar-title { font-size: 15px; font-weight: 600; }
+    .topbar-right  { display: flex; align-items: center; gap: 12px; }
+    .live-pill {
+      display: flex; align-items: center; gap: 5px;
+      background: #f0fdf4; border: 1px solid #bbf7d0;
+      border-radius: 20px; padding: 3px 10px;
+      font-size: 12px; font-weight: 600; color: #16a34a;
+    }
+    .live-dot { width: 7px; height: 7px; background: #16a34a; border-radius: 50%; animation: pulse 1.5s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+    .content { flex: 1; padding: 24px; overflow-y: auto; }
+
+    /* ── Pages ── */
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* ── Page header ── */
+    .page-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; }
+    .page-title  { font-size: 20px; font-weight: 700; }
+    .page-sub    { font-size: 13px; color: #6b7280; margin-top: 3px; }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 7px 14px; border-radius: 7px; font-size: 13px;
+      font-weight: 600; cursor: pointer; border: none; transition: opacity 0.15s;
+    }
+    .btn:hover { opacity: 0.85; }
+    .btn-primary { background: #2563eb; color: #fff; }
+    .btn-danger  { background: #dc2626; color: #fff; }
+    .btn-ghost   { background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb; }
+    .btn svg { width: 15px; height: 15px; }
+
+    /* ── Stats ── */
+    .stats-row { display: grid; grid-template-columns: repeat(5,1fr); gap: 14px; margin-bottom: 24px; }
+    .stat-card { background:#fff; border:1px solid #e5e7eb; border-radius:10px; padding:16px 18px; }
+    .stat-label { font-size:11px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:#6b7280; margin-bottom:6px; }
+    .stat-value { font-size:28px; font-weight:700; line-height:1; margin-bottom:4px; }
+    .stat-desc  { font-size:11px; color:#9ca3af; }
+    .stat-card.green  .stat-value { color:#16a34a; }
+    .stat-card.red    .stat-value { color:#dc2626; }
+    .stat-card.amber  .stat-value { color:#d97706; }
+    .stat-card.purple .stat-value { color:#7c3aed; }
+    .stat-card.blue   .stat-value { color:#2563eb; }
+
+    /* ── Agent grid ── */
+    .agents-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(270px,1fr)); gap:16px; }
+    .agent-card  { background:#fff; border:2px solid #e5e7eb; border-radius:12px; padding:16px; }
+    .agent-card.available { border-color:#86efac; }
+    .agent-card.busy      { border-color:#fca5a5; }
+    .agent-card.on-break  { border-color:#fcd34d; }
+    .agent-card.on-leave  { border-color:#a5b4fc; }
+    .agent-card.clickable { cursor:pointer; transition:box-shadow 0.15s; }
+    .agent-card.clickable:hover { box-shadow:0 4px 16px rgba(0,0,0,.1); }
+
+    .agent-header { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+    .avatar {
+      width:38px; height:38px; border-radius:50%;
+      display:flex; align-items:center; justify-content:center;
+      font-weight:700; font-size:15px; color:#fff; flex-shrink:0; position:relative;
+    }
+    .avatar .dot {
+      position:absolute; bottom:1px; right:1px;
+      width:10px; height:10px; border-radius:50%; border:2px solid #fff;
+    }
+    .dot.green  { background:#16a34a; }
+    .dot.red    { background:#dc2626; }
+    .dot.amber  { background:#d97706; }
+    .dot.purple { background:#7c3aed; }
+
+    .agent-name { font-size:14px; font-weight:700; }
+    .agent-role { font-size:12px; color:#6b7280; margin-top:1px; }
+
+    .status-badge {
+      display:inline-flex; align-items:center; gap:5px;
+      border-radius:20px; padding:3px 10px;
+      font-size:11px; font-weight:600; margin-bottom:12px;
+    }
+    .status-badge .sdot { width:6px; height:6px; border-radius:50%; }
+    .status-badge.available { background:#f0fdf4; color:#15803d; }
+    .status-badge.available .sdot { background:#16a34a; }
+    .status-badge.busy      { background:#fef2f2; color:#b91c1c; }
+    .status-badge.busy .sdot { background:#dc2626; }
+    .status-badge.on-break  { background:#fffbeb; color:#92400e; }
+    .status-badge.on-break .sdot { background:#d97706; }
+    .status-badge.on-leave  { background:#f5f3ff; color:#5b21b6; }
+    .status-badge.on-leave .sdot { background:#7c3aed; }
+
+    .task-label { font-size:10px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:#9ca3af; margin-bottom:4px; }
+    .task-name  { font-size:12px; color:#374151; }
+    .no-task    { font-size:12px; color:#9ca3af; }
+    .updated    { font-size:11px; color:#d1d5db; margin-top:6px; }
+    .change-btn { margin-top:10px; width:100%; background:#f3f4f6; border:1px solid #e5e7eb; border-radius:6px; padding:6px; font-size:12px; font-weight:600; color:#374151; cursor:pointer; }
+    .change-btn:hover { background:#e5e7eb; }
+
+    /* ── Table ── */
+    .table-wrap { background:#fff; border:1px solid #e5e7eb; border-radius:10px; overflow:hidden; }
+    table { width:100%; border-collapse:collapse; }
+    thead th {
+      text-align:left; padding:11px 16px;
+      font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.06em; color:#6b7280;
+      background:#f9fafb; border-bottom:1px solid #e5e7eb;
+    }
+    tbody td { padding:12px 16px; font-size:13px; border-bottom:1px solid #f3f4f6; vertical-align:middle; }
+    tbody tr:last-child td { border-bottom:none; }
+    tbody tr:hover td { background:#f9fafb; }
+
+    /* ── Summary pills ── */
+    .pills { display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap; }
+    .pill  { border-radius:20px; padding:4px 12px; font-size:12px; font-weight:600; }
+
+    /* ── Avatar sm ── */
+    .av-sm { width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; color:#fff; flex-shrink:0; }
+
+    /* ── Modal ── */
+    .modal-bg {
+      display:none; position:fixed; inset:0; background:rgba(0,0,0,.4);
+      z-index:100; align-items:center; justify-content:center;
+    }
+    .modal-bg.open { display:flex; }
+    .modal {
+      background:#fff; border-radius:12px; padding:28px;
+      width:440px; max-width:95vw; box-shadow:0 20px 60px rgba(0,0,0,.18);
+    }
+    .modal-title { font-size:16px; font-weight:700; margin-bottom:20px; }
+    .form-group  { margin-bottom:16px; }
+    .form-group label { display:block; font-size:12px; font-weight:600; color:#374151; margin-bottom:5px; }
+    .form-group input, .form-group select {
+      width:100%; padding:8px 10px; border:1px solid #d1d5db;
+      border-radius:6px; font-size:13px; outline:none; transition:border-color .15s;
+    }
+    .form-group input:focus, .form-group select:focus { border-color:#2563eb; }
+    .modal-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:22px; }
+    .status-opts { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .status-opt  { border-radius:8px; padding:10px 12px; cursor:pointer; font-size:13px; font-weight:600; text-align:center; border:2px solid #e5e7eb; transition:all .15s; }
+
+    /* ── Toast ── */
+    .toast {
+      position:fixed; bottom:24px; right:24px; background:#1e293b; color:#f1f5f9;
+      padding:10px 18px; border-radius:8px; font-size:13px; font-weight:500;
+      opacity:0; transition:opacity .3s; pointer-events:none; z-index:200;
+    }
+    .toast.show { opacity:1; }
+
+    /* ── Spinner ── */
+    .spinner { text-align:center; padding:40px; color:#9ca3af; font-size:13px; }
+  </style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="app-name">QA System</div>
+      <div class="app-sub">Quality Assurance Management</div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Overview</div>
+      <button class="nav-item active" onclick="navigate('dashboard')">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Dashboard
+      </button>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Requests</div>
+      <button class="nav-item" onclick="navigate('submit-request')">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 4v16m8-8H4"/></svg>
+        Submit Request
+      </button>
+      <button class="nav-item" onclick="navigate('request-queue')">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+        Request Queue
+      </button>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Audits</div>
+      <button class="nav-item" onclick="navigate('audit-workloads')">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 17v-2m3 2v-4m3 4v-6M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+        Audit Workloads
+      </button>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Team</div>
+      <button class="nav-item" onclick="navigate('qa-availability')">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+        QA Availability
+      </button>
+      <button class="nav-item" onclick="navigate('user-management')">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 20h5v-2a4 4 0 00-5-3.87M9 20H4v-2a4 4 0 015-3.87m6-4a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+        User Management
+      </button>
+    </div>
+
+    <div class="sidebar-bottom">
+      <div class="av-sm" style="background:#4f46e5;">A</div>
+      <div>
+        <div class="s-name">Admin User</div>
+        <div class="s-role">Administrator</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-title">QA Management System</div>
+      <div class="topbar-right">
+        <div class="live-pill"><span class="live-dot"></span> Live</div>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- ── Dashboard ── -->
+      <div class="page active" id="page-dashboard">
+        <div class="page-header">
+          <div>
+            <div class="page-title">QA Availability Board</div>
+            <div class="page-sub">Live team status.</div>
+          </div>
+          <div class="live-pill"><span class="live-dot"></span> Live</div>
+        </div>
+        <div class="stats-row" id="db-stats"></div>
+        <div class="agents-grid" id="db-grid"><div class="spinner">Loading…</div></div>
+      </div>
+
+      <!-- ── QA Availability ── -->
+      <div class="page" id="page-qa-availability">
+        <div class="page-header">
+          <div>
+            <div class="page-title">QA Availability</div>
+            <div class="page-sub">Click a card to update status and current task.</div>
+          </div>
+        </div>
+        <div class="stats-row" id="av-stats"></div>
+        <div class="agents-grid" id="av-grid"><div class="spinner">Loading…</div></div>
+      </div>
+
+      <!-- ── User Management ── -->
+      <div class="page" id="page-user-management">
+        <div class="page-header">
+          <div>
+            <div class="page-title">User Management</div>
+            <div class="page-sub">Add or remove QA team members.</div>
+          </div>
+          <button class="btn btn-primary" onclick="openAddModal()">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 4v16m8-8H4"/></svg>
+            Add User
+          </button>
+        </div>
+        <div class="pills" id="um-pills"></div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th><th>Role</th><th>Department</th>
+                <th>Status</th><th>Current Task</th>
+                <th style="text-align:right;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="um-tbody"><tr><td colspan="6" class="spinner">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── Placeholder pages ── -->
+      <div class="page" id="page-submit-request">
+        <div class="page-title" style="margin-bottom:12px;">Submit Request</div>
+        <p style="color:#6b7280;">Coming soon.</p>
+      </div>
+      <div class="page" id="page-request-queue">
+        <div class="page-title" style="margin-bottom:12px;">Request Queue</div>
+        <p style="color:#6b7280;">Coming soon.</p>
+      </div>
+      <div class="page" id="page-audit-workloads">
+        <div class="page-title" style="margin-bottom:12px;">Audit Workloads</div>
+        <p style="color:#6b7280;">Coming soon.</p>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /shell -->
+
+<!-- Add User Modal -->
+<div class="modal-bg" id="addModal">
+  <div class="modal">
+    <div class="modal-title">Add New User</div>
+    <div class="form-group">
+      <label>Full Name *</label>
+      <input id="fn-name" type="text" placeholder="e.g. Juan dela Cruz"/>
+    </div>
+    <div class="form-group">
+      <label>Role *</label>
+      <select id="fn-role">
+        <option value="">— Select role —</option>
+        <option>QA Analyst</option><option>QA Reviewer</option>
+        <option>QA Specialist</option><option>QA Lead</option><option>QA Supervisor</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Department *</label>
+      <select id="fn-dept">
+        <option value="">— Select department —</option>
+        <option>CX Hub</option><option>Operations</option>
+        <option>Ground Svcs</option><option>MNL Hub</option><option>Real-Time</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Initial Status</label>
+      <select id="fn-status">
+        <option value="available">Available</option>
+        <option value="busy">Busy</option>
+        <option value="on-break">On Break</option>
+        <option value="on-leave">On Leave</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeAddModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="submitAddUser()">Add User</button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Confirm Modal -->
+<div class="modal-bg" id="delModal">
+  <div class="modal">
+    <div class="modal-title">Remove User</div>
+    <p style="font-size:14px;color:#374151;margin-bottom:20px;">
+      Are you sure you want to remove <strong id="del-name"></strong>? This cannot be undone.
+    </p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeDelModal()">Cancel</button>
+      <button class="btn btn-danger" onclick="confirmDelete()">Remove</button>
+    </div>
+  </div>
+</div>
+
+<!-- Status Update Modal -->
+<div class="modal-bg" id="statusModal">
+  <div class="modal">
+    <div class="modal-title" id="sm-title">Update Status</div>
+    <div class="form-group">
+      <label>Status</label>
+      <div class="status-opts" id="sm-opts"></div>
+    </div>
+    <div class="form-group">
+      <label>Current Task <span style="color:#9ca3af;font-weight:400;">(optional)</span></label>
+      <input id="sm-task" type="text" placeholder="e.g. Post Audit QA, Coaching Session…"/>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeStatusModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveStatus()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Constants ──────────────────────────────────────────────────────────────
+const AVATAR_COLORS = [
+  "#16a34a","#2563eb","#dc2626","#d97706","#7c3aed",
+  "#0891b2","#059669","#0f766e","#9333ea","#db2777"
+];
+const STATUS_META = {
+  "available": { label:"Available", dot:"green",  badge:"available", border:"available", bg:"#f0fdf4", bc:"#86efac", col:"#15803d" },
+  "busy":      { label:"Busy",      dot:"red",    badge:"busy",      border:"busy",      bg:"#fef2f2", bc:"#fca5a5", col:"#b91c1c" },
+  "on-break":  { label:"On Break",  dot:"amber",  badge:"on-break",  border:"on-break",  bg:"#fffbeb", bc:"#fcd34d", col:"#92400e" },
+  "on-leave":  { label:"On Leave",  dot:"purple", badge:"on-leave",  border:"on-leave",  bg:"#f5f3ff", bc:"#a5b4fc", col:"#5b21b6" },
+};
+
+function initials(name) {
+  return name.trim().split(" ").map(w=>w[0]).join("").substring(0,2).toUpperCase();
+}
+function avatarColor(id) {
+  const i = parseInt((id||"").replace(/\D/g,"").slice(-2)||"0");
+  return AVATAR_COLORS[i % AVATAR_COLORS.length];
+}
+
+// ── Navigation ─────────────────────────────────────────────────────────────
+let currentPage = "dashboard";
+
+function navigate(page) {
+  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+  document.querySelectorAll(".nav-item").forEach(b => b.classList.remove("active"));
+  document.getElementById("page-" + page).classList.add("active");
+  document.querySelector(`[onclick="navigate('${page}')"]`).classList.add("active");
+  currentPage = page;
+  if (page === "dashboard")       loadDashboard();
+  if (page === "qa-availability") loadAvailability();
+  if (page === "user-management") loadUserManagement();
+}
+
+// ── API helpers ────────────────────────────────────────────────────────────
+async function api(method, path, body) {
+  const opts = { method, headers: { "Content-Type": "application/json" } };
+  if (body) opts.body = JSON.stringify(body);
+  const r = await fetch(path, opts);
+  if (!r.ok) {
+    const err = await r.json().catch(() => ({}));
+    throw new Error(err.error || r.statusText);
+  }
+  return r.json();
+}
+
+// ── Shared renderers ───────────────────────────────────────────────────────
+function renderStats(users, targetId) {
+  const counts = { available:0, busy:0, "on-break":0, "on-leave":0 };
+  users.forEach(u => counts[u.status] = (counts[u.status]||0)+1);
+  const tasks = users.filter(u=>u.task).length;
+  document.getElementById(targetId).innerHTML = `
+    <div class="stat-card green"><div class="stat-label">Available</div><div class="stat-value">${counts.available}</div><div class="stat-desc">ready to take work</div></div>
+    <div class="stat-card red"><div class="stat-label">Busy</div><div class="stat-value">${counts.busy}</div><div class="stat-desc">in active work</div></div>
+    <div class="stat-card amber"><div class="stat-label">On Break</div><div class="stat-value">${counts["on-break"]}</div><div class="stat-desc">&nbsp;</div></div>
+    <div class="stat-card purple"><div class="stat-label">Away / Leave</div><div class="stat-value">${counts["on-leave"]}</div><div class="stat-desc">&nbsp;</div></div>
+    <div class="stat-card blue"><div class="stat-label">Active Tasks</div><div class="stat-value">${tasks}</div><div class="stat-desc">in progress</div></div>
+  `;
+}
+
+function agentCard(u, clickable) {
+  const m = STATUS_META[u.status] || STATUS_META.available;
+  const col = avatarColor(u.userId);
+  const ini = initials(u.name);
+  const taskHtml = u.task
+    ? `<div class="task-name">${u.task}</div>`
+    : `<div class="no-task">No active task</div>`;
+  const clickAttr = clickable ? `onclick="openStatusModal('${u.userId}')"` : "";
+  const changeBtn = clickable ? `<button class="change-btn">✏ Change Status</button>` : "";
+  return `
+    <div class="agent-card ${m.border}${clickable?" clickable":""}" ${clickAttr}>
+      <div class="agent-header">
+        <div class="avatar" style="background:${col};">${ini}<span class="dot ${m.dot}"></span></div>
+        <div><div class="agent-name">${u.name}</div><div class="agent-role">${u.role} — ${u.dept}</div></div>
+      </div>
+      <span class="status-badge ${m.badge}"><span class="sdot"></span> ${m.label}</span>
+      <div class="task-label">Current Task</div>
+      ${taskHtml}
+      <div class="updated">Updated ${u.updated||""}</div>
+      ${changeBtn}
+    </div>`;
+}
+
+// ── Dashboard ──────────────────────────────────────────────────────────────
+async function loadDashboard() {
+  try {
+    const users = await api("GET", "/api/users");
+    renderStats(users, "db-stats");
+    document.getElementById("db-grid").innerHTML = users.map(u => agentCard(u, false)).join("");
+  } catch(e) { document.getElementById("db-grid").innerHTML = `<div class="spinner">Error: ${e.message}</div>`; }
+}
+
+// ── QA Availability ────────────────────────────────────────────────────────
+async function loadAvailability() {
+  try {
+    const users = await api("GET", "/api/users");
+    renderStats(users, "av-stats");
+    document.getElementById("av-grid").innerHTML = users.map(u => agentCard(u, true)).join("");
+  } catch(e) { document.getElementById("av-grid").innerHTML = `<div class="spinner">Error: ${e.message}</div>`; }
+}
+
+// Status modal
+let editingUserId = null;
+let selectedStatus = "available";
+
+function openStatusModal(userId) {
+  api("GET", `/api/users/${userId}`).then(user => {
+    editingUserId = userId;
+    selectedStatus = user.status;
+    document.getElementById("sm-title").textContent = `Update: ${user.name}`;
+    document.getElementById("sm-task").value = user.task || "";
+    renderStatusOpts();
+    document.getElementById("statusModal").classList.add("open");
+  });
+}
+
+function renderStatusOpts() {
+  document.getElementById("sm-opts").innerHTML = Object.entries(STATUS_META).map(([val, m]) => `
+    <div class="status-opt" id="sopt-${val}" onclick="selectStatus('${val}')"
+      style="border-color:${selectedStatus===val?m.bc:"#e5e7eb"};background:${selectedStatus===val?m.bg:"#fff"};color:${selectedStatus===val?m.col:"#374151"};">
+      ${m.label}
+    </div>`).join("");
+}
+
+function selectStatus(val) { selectedStatus = val; renderStatusOpts(); }
+function closeStatusModal() { editingUserId = null; document.getElementById("statusModal").classList.remove("open"); }
+
+async function saveStatus() {
+  if (!editingUserId) return;
+  const task = document.getElementById("sm-task").value.trim();
+  try {
+    await api("PATCH", `/api/users/${editingUserId}`, { status: selectedStatus, task });
+    closeStatusModal();
+    loadAvailability();
+    showToast("Status updated.");
+  } catch(e) { showToast("Error: " + e.message); }
+}
+
+// ── User Management ────────────────────────────────────────────────────────
+async function loadUserManagement() {
+  try {
+    const users = await api("GET", "/api/users");
+    const counts = { available:0, busy:0, "on-break":0, "on-leave":0 };
+    users.forEach(u => counts[u.status] = (counts[u.status]||0)+1);
+
+    document.getElementById("um-pills").innerHTML = `
+      <span class="pill" style="background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0;">✔ ${counts.available} Available</span>
+      <span class="pill" style="background:#fef2f2;color:#b91c1c;border:1px solid #fecaca;">● ${counts.busy} Busy</span>
+      <span class="pill" style="background:#fffbeb;color:#92400e;border:1px solid #fde68a;">◐ ${counts["on-break"]} On Break</span>
+      <span class="pill" style="background:#f5f3ff;color:#5b21b6;border:1px solid #ddd6fe;">○ ${counts["on-leave"]} On Leave</span>
+      <span class="pill" style="background:#f0f9ff;color:#0369a1;border:1px solid #bae6fd;">👤 ${users.length} Total</span>
+    `;
+
+    document.getElementById("um-tbody").innerHTML = users.map(u => {
+      const m = STATUS_META[u.status] || STATUS_META.available;
+      const col = avatarColor(u.userId);
+      return `<tr>
+        <td><div style="display:flex;align-items:center;gap:10px;">
+          <div class="av-sm" style="background:${col};">${initials(u.name)}</div>
+          <span style="font-weight:600;">${u.name}</span>
+        </div></td>
+        <td>${u.role}</td>
+        <td>${u.dept}</td>
+        <td><span class="status-badge ${m.badge}"><span class="sdot"></span> ${m.label}</span></td>
+        <td style="color:#6b7280;">${u.task||"—"}</td>
+        <td style="text-align:right;">
+          <button class="btn btn-danger" style="padding:4px 10px;font-size:12px;"
+            onclick="openDelModal('${u.userId}','${u.name.replace(/'/g,"\\'")}')">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
+            Remove
+          </button>
+        </td>
+      </tr>`;
+    }).join("");
+  } catch(e) {
+    document.getElementById("um-tbody").innerHTML = `<tr><td colspan="6" class="spinner">Error: ${e.message}</td></tr>`;
+  }
+}
+
+// Add user modal
+function openAddModal() {
+  ["fn-name","fn-role","fn-dept"].forEach(id => document.getElementById(id).value = "");
+  document.getElementById("fn-status").value = "available";
+  document.getElementById("addModal").classList.add("open");
+}
+function closeAddModal() { document.getElementById("addModal").classList.remove("open"); }
+
+async function submitAddUser() {
+  const name   = document.getElementById("fn-name").value.trim();
+  const role   = document.getElementById("fn-role").value;
+  const dept   = document.getElementById("fn-dept").value;
+  const status = document.getElementById("fn-status").value;
+  if (!name || !role || !dept) { alert("Please fill in all required fields."); return; }
+  try {
+    await api("POST", "/api/users", { name, role, dept, status });
+    closeAddModal();
+    loadUserManagement();
+    showToast(`${name} added to the team.`);
+  } catch(e) { showToast("Error: " + e.message); }
+}
+
+// Delete modal
+let delTargetId = null;
+function openDelModal(id, name) {
+  delTargetId = id;
+  document.getElementById("del-name").textContent = name;
+  document.getElementById("delModal").classList.add("open");
+}
+function closeDelModal() { delTargetId = null; document.getElementById("delModal").classList.remove("open"); }
+
+async function confirmDelete() {
+  if (!delTargetId) return;
+  try {
+    await api("DELETE", `/api/users/${delTargetId}`);
+    closeDelModal();
+    loadUserManagement();
+    showToast("User removed.");
+  } catch(e) { showToast("Error: " + e.message); }
+}
+
+// ── Toast ──────────────────────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg; t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 2800);
+}
+
+// Close modals on backdrop click
+["addModal","delModal","statusModal"].forEach(id => {
+  document.getElementById(id).addEventListener("click", e => {
+    if (e.target === e.currentTarget) e.target.classList.remove("open");
+  });
+});
+
+// ── Init ───────────────────────────────────────────────────────────────────
+loadDashboard();
+</script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+{
+  "users": [
+    { "userId": "user-001", "name": "Maria Santos",      "role": "QA Reviewer",   "dept": "CX Hub",      "status": "available", "task": "",                 "updated": "Jun 10, 2025 08:30" },
+    { "userId": "user-002", "name": "Kevin Lim",         "role": "QA Analyst",    "dept": "Operations",  "status": "busy",      "task": "Post Audit QA",    "updated": "Jun 10, 2025 07:28" },
+    { "userId": "user-003", "name": "Rose Buenaventura", "role": "QA Analyst",    "dept": "CX Hub",      "status": "busy",      "task": "Real-Time QA",     "updated": "Jun 10, 2025 05:32" },
+    { "userId": "user-004", "name": "Diego Macaraeg",    "role": "QA Specialist", "dept": "Ground Svcs", "status": "available", "task": "",                 "updated": "Jun 10, 2025 08:00" },
+    { "userId": "user-005", "name": "Sofia Abad",        "role": "QA Analyst",    "dept": "CX Hub",      "status": "on-break",  "task": "",                 "updated": "Jun 10, 2025 08:15" },
+    { "userId": "user-006", "name": "Leo Pascual",       "role": "QA Analyst",    "dept": "MNL Hub",     "status": "busy",      "task": "Coaching Session", "updated": "Jun 10, 2025 05:47" },
+    { "userId": "user-007", "name": "Camille Navarro",   "role": "QA Analyst",    "dept": "Operations",  "status": "on-leave",  "task": "",                 "updated": "Jun 9, 2025 17:30"  },
+    { "userId": "user-008", "name": "Noel Dizon",        "role": "QA Specialist", "dept": "Ground Svcs", "status": "available", "task": "",                 "updated": "Jun 10, 2025 07:45" }
+  ]
+}

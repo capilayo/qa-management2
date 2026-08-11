@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: qa-management
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn start:application.app --bind 0.0.0.0:$PORT
+    envVars:
+      - key: CLOUDANT_URL
+        sync: false
+      - key: CLOUDANT_APIKEY
+        sync: false
