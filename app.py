@@ -1,10 +1,21 @@
 import os
 from datetime import datetime
+from pathlib import Path
+from dotenv import load_dotenv
 from flask import Flask, jsonify, request, render_template, abort
+
+load_dotenv(Path(__file__).parent / ".env")
 
 import db as cloudant
 
 app = Flask(__name__)
+
+# Bootstrap Cloudant on first import (works for both gunicorn and python start.py)
+with app.app_context():
+    try:
+        cloudant.bootstrap()
+    except Exception as e:
+        print(f"Warning: Cloudant bootstrap failed: {e}")
 
 
 def now_str():
