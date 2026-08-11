@@ -1,8 +1,9 @@
 """start.py — entry point for Render / IBM Cloud deployment."""
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(Path(__file__).parent / ".env")
 
 import db as cloudant
 import app as application

@@ -8,7 +8,8 @@ app = Flask(__name__)
 
 
 def now_str():
-    return datetime.now().strftime("%b %-d, %Y %H:%M")
+    d = datetime.now()
+    return f"{d.strftime('%b')} {d.day}, {d.year} {d.strftime('%H:%M')}"
 
 
 # ── Pages ─────────────────────────────────────────────────────────────────────
