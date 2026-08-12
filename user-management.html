@@ -191,7 +191,7 @@
       if (!name || !role || !dept) { alert("Please fill in all required fields."); return; }
 
       const users = getUsers();
-      const newId = users.length ? Math.max(...users.map(u => u.id)) + 1 : 1;
+      const newId = users.length ? users.reduce((max, u) => Math.max(max, Number(u.id) || 0), 0) + 1 : 1;
       users.push({ id: newId, name, role, dept, status, task: "", tat: "", updated: nowString() });
       saveUsers(users);
       closeAddModal();
