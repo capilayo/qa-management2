@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QA Management System — Submit Request</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/capilayo/qa-management2@main/style.css" />
+  <style>
+    .form-container {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .form-container iframe {
+      display: block;
+      width: 100%;
+      height: calc(100vh - 220px);
+      min-height: 500px;
+      border: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="demo-banner">
+    <span class="badge">DEMO MODE</span>
+    <span>— Sample data only. No Supabase connection required.</span>
+  </div>
+
+  <div class="shell">
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <div class="main">
+      <div class="topbar">
+        <div class="topbar-title">QA Management System</div>
+        <div class="topbar-right">
+          <div class="live-pill"><span class="live-dot"></span> Live</div>
+          <button class="notif-btn">
+            <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+            <span class="notif-badge">3</span>
+          </button>
+          <button class="admin-btn">Admin <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M19 9l-7 7-7-7"/></svg></button>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Submit Request</div>
+            <div class="page-sub">Fill out the form below to submit a QA request.</div>
+          </div>
+        </div>
+
+        <div class="form-container">
+          <iframe
+            src="https://forms.cloud.microsoft/Pages/ResponsePage.aspx?id=V3D2_MlQ1EqY8__KZK3Z6WF6XlebOcBHn2MBcjnScKlUNlk4TDhGNjVIWlZHOExGTjVIMllIMVhCMy4u"
+            title="Submit QA Request">
+          </iframe>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/gh/capilayo/qa-management2@main/shared.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/capilayo/qa-management2@main/nav.js"></script>
+  <script>
+    document.getElementById("sidebar").innerHTML = buildSidebar("submit-request");
+  </script>
+</body>
+</html>

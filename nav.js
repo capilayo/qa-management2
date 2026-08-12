@@ -3,7 +3,7 @@ function buildSidebar(activePage) {
   const items = [
     { id: "dashboard",        href: "index.html",           section: "Overview",  label: "Dashboard",
       icon: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>` },
-    { id: "submit-request",   href: "#",                    section: "Requests",  label: "Submit Request",
+    { id: "submit-request",   href: "submit-request.html",  section: "Requests",  label: "Submit Request",
       icon: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 4v16m8-8H4"/></svg>` },
     { id: "request-queue",    href: "#",                    section: "Requests",  label: "Request Queue",
       icon: `<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>` },
